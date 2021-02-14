@@ -5,12 +5,13 @@ import pyjet
 import h5py     
 from pyjet import cluster,DTYPE_PTEPM
 import pandas as pd
+from sklearn.preprocessing import KBinsDiscretizer as kbd
 
 ##########################
 # function for clustering the top tagging dataset in chunks
 ##########################
 
-def cluster_toptagging_dataset_part(h5file,R,p,evrange):
+def cluster_toptagging_dataset_part( h5file, R, p, evrange ):
     data_table = pd.read_hdf( h5file, start=evrange[0], stop=evrange[1], key="table" )
     alljets = {}
     alljets['top'] = []
@@ -52,10 +53,10 @@ def cluster_toptagging_dataset_part(h5file,R,p,evrange):
 # function for getting the Lund history for a single jet, i.e. the clustering history but with each 4-momentum having a 'plane-id'
 ##########################
 
-def get_lund_history(jet,R,p):
+def get_lund_history( jet, R, p ):
 
     # re-clustering the jet
-    clustered_jet = cluster(jet.constituents_array(), R=R, p=p)
+    clustered_jet = cluster( jet.constituents_array(), R=R, p=p )
     splittings=[]
     
     # each level in the clustering history is represented by a list of subjets
@@ -101,7 +102,7 @@ def get_lund_history(jet,R,p):
 # function which takes the lund history and computes the observables at all splittings in the jet, with a label indicating which plane it comes from
 ##########################
 
-def get_lund_splittings(jet_history):
+def get_lund_splittings( jet_history ):
     
     lund_splittings = []
 
@@ -153,4 +154,15 @@ def get_lund_splittings(jet_history):
             lund_splittings.append( splitting )
 
     return lund_splittings
+
+def create_basic_lund_image( lund_obs, bins ):
+
+    # bins should be a 2D array for bins in x and y direction
+    # x could correspond to logidR, y could correspond to logkt, preprocess the lund_obs first
+
+    kbd_lund = kbd( n_bins=bins, encode='onehot', strategy='uniform' )
+    kbd_lund.fit( lund_obs )
+    lund_image = kbd_lund.transform( lund_obs )
+    return lund_image, kbd_lund
+
 
