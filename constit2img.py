@@ -219,9 +219,8 @@ def process_batch (start_id, input, output, n_constit, n_crop, intensity, rotate
     for i in np.arange(0,__batch_size__):
         etas[i,:], phis[i,:] = preprocessing(etas[i,:], phis[i,:], weights[i,:], rotate, flip)
 
-    # Using pT instead of energy E
     print_time("Creating images")
-    z_ori = orig_image(etas, phis, pT)    
+    z_ori = orig_image(etas, phis, weights)    
     print_time("Crop and normalize")
     z_new = np.zeros((z_ori.shape[0],n_crop, n_crop))
     
