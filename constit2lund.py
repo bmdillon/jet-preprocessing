@@ -10,7 +10,7 @@ outfile = sys.argv[3]
 
 R=0.8
 p=-1
-jets = cluster_toptagging_dataset_part( h5path, R, p, [0,njets] )
+jets, qcd_masses, top_masses = cluster_toptagging_dataset_part( h5path, R, p, [0,njets] )
 
 qcd_jets = jets['qcd']
 top_jets = jets['top']

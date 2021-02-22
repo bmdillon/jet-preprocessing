@@ -25,29 +25,45 @@ def cluster_toptagging_dataset_part( h5file, R, p, evrange ):
             py = jet[j*4+2]
             pz = jet[j*4+3]
             pt = np.sqrt( px**2 + py**2 )
-            if py != 0:
-                phi = np.arctan( px/py )
-            if not py > 0:
-                phi = np.arctan( px/0.00001)
+            phi = np.arctan2( px, py )
+            if phi < 0:
+                phi = phi + 2*np.pi
+            if phi > 2*np.pi:
+                phi = phi - 2*np.pi
+            phi = phi - np.pi
             p = np.sqrt( px**2 + py**2 + pz**2 )
-            if p !=0:
-                theta = np.arccos( pz/p )
-            if not p>0:
-                theta = np.arccos( pz/0.00001 )
-            eta = np.log( np.arctan( theta/2 ) )
-            #mass = np.sqrt( E**2 - p**2 )
+            smallnum = 1e-10
+            if pt > smallnum and pz > smallnum:
+                theta = np.arctan( pt/pz )
+                if theta < 0:
+                    theta = theta + np.pi
+                eta = np.log( np.tan( theta/2 ) )
+            if pz < smallnum:
+                eta = 0
+            if pt < smallnum:
+                eta = 1e-10
+            #if pz > smallnum:
+            #    y = 0.5*np.log( E + pz)/( E - pz )
+            #else:
+            #    y = 0.0
+            #mass2 = E**2 - px**2 - py**2 - py**2
+            #if mass2 < 0:
+            #    mass2 = 0.0
+            #mass = np.sqrt( mass2 )
             pseudojets_input[j]['pT'] = pt
             pseudojets_input[j]['mass'] = 0.0
             pseudojets_input[j]['eta'] = eta
             pseudojets_input[j]['phi'] = phi
         sequence = cluster( pseudojets_input, R=R, p=p )
-        jets = sequence.inclusive_jets( ptmin=20 )
+        jets = sequence.inclusive_jets( ptmin=0 )
         final_jet = sorted( jets, key=lambda PseudoJet: PseudoJet.pt, reverse=True )[0]
         if jet['is_signal_new'] == True:
             alljets['top'] += [final_jet]
         else:
             alljets['qcd'] += [final_jet]
-    return alljets
+    qcd_masses = [ j.mass for j in alljets['qcd'] ]
+    top_masses = [ j.mass for j in alljets['top'] ]
+    return alljets, qcd_masses, top_masses
 
 ##########################
 # function for getting the Lund history for a single jet, i.e. the clustering history but with each 4-momentum having a 'plane-id'
