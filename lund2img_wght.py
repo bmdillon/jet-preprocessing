@@ -19,6 +19,17 @@ lund_1 = get_plane_w( lund_jets, 1 )
 lund_2 = get_plane_w( lund_jets, 2 )
 lund_3 = get_plane_w( lund_jets, 3 )
 
+planes = 3
+
+if planes == 0:
+    lund_d = lund_0
+if planes == 1:
+    lund_d = [ i+j for i,j in zip(lund_0,lund_1)  ]
+if planes == 2:
+    lund_d = [ i+j+k for i,j,k in zip(lund_0,lund_1,lund_2)  ]
+if planes == 3:
+    lund_d = [ i+j+k+l for i,j,k,l in zip(lund_0,lund_1,lund_2,lund_3) ]
+
 masses = np.array( [ np.max( [ i[2] for i in jet ] ) if len(jet)>0 else 0.0 for jet in lund_jets ] )
 
 def flatten( lund_jet_sample ):
@@ -33,10 +44,7 @@ def flatten_w( lund_jet_sample ):
         jf += [ i[0:2] for i in jet ]
     return jf
 
-lund_0_flat = flatten_w( lund_0 )
-lund_1_flat = flatten_w( lund_1 )
-lund_2_flat = flatten_w( lund_2 )
-lund_3_flat = flatten_w( lund_3 )
+lund_d_flat = flatten_w( lund_d )
 
 def cut_to_range_w( data, cuts, dim=2):
     if dim != len(cuts):
@@ -62,14 +70,14 @@ def cut_to_range_w( data, cuts, dim=2):
             weights.append(new_wghts)
     return new_data, weights
 
-lund_0_cut, lund_0_wghts_cut = cut_to_range_w( lund_0, ((0,7),(-2,6)) )
-lund_0_flat_cut = flatten( lund_0_cut )
+lund_d_cut, lund_d_wghts_cut = cut_to_range_w( lund_d, ((0,7),(-2,6)) )
+lund_d_flat_cut = flatten( lund_d_cut )
 
 transform = kbd( n_bins=[40,40], encode='ordinal', strategy='uniform' )
-transform.fit( lund_0_flat_cut )
+transform.fit( lund_d_flat_cut )
 
-lund_0_ord = [ transform.transform(i) for i in lund_0_cut ]
-lund_0_flat_ord = transform.transform( lund_0_flat_cut )
+lund_d_ord = [ transform.transform(i) for i in lund_d_cut ]
+lund_d_flat_ord = transform.transform( lund_d_flat_cut )
 
 def ord2onehot( data_ord, lims ):
     img = np.zeros((lims[0],lims[1]))
@@ -77,7 +85,7 @@ def ord2onehot( data_ord, lims ):
         img[ lims[1] - 1 - int(i[1]), int(i[0]) ] = 1
     return img
 
-def ord2onehot_w(data_ord, lims, weights, norm=True):
+def ord2onehot_w(data_ord, lims, weights, norm=False):
     img = np.zeros((lims[0],lims[1]))
     for i in range(len(data_ord)):
         img[ lims[1] - 1 - int( data_ord[i][1] ), int( data_ord[i][0] ) ] = weights[i]
@@ -86,15 +94,15 @@ def ord2onehot_w(data_ord, lims, weights, norm=True):
         img = img/nn
     return img
 
-lund_0_ohw = []
-for jet,wght in zip(lund_0_ord,lund_0_wghts_cut):
-    lund_0_ohw.append( ord2onehot_w( jet, [40,40], wght ).reshape(-1) )
-lund_0_ohw = np.array( lund_0_ohw )
+lund_d_ohw = []
+for jet,wght in zip(lund_d_ord,lund_d_wghts_cut):
+    lund_d_ohw.append( ord2onehot_w( jet, [40,40], wght ).reshape(-1) )
+lund_d_ohw = np.array( lund_d_ohw )
 
-lund_0_ohw_2 = np.array( [ np.concatenate( ( lund_0_ohw[i], np.array([0]), [masses[i]] ), axis=-1 )
-                                 for i in range(len(lund_0_ohw)) ] )
+lund_d_ohw_2 = np.array( [ np.concatenate( ( lund_d_ohw[i], np.array([0]), [masses[i]] ), axis=-1 )
+                                 for i in range(len(lund_d_ohw)) ] )
 
-out = pd.DataFrame( lund_0_ohw_2, columns=[str(i) for i in range(1600)]+["__signal_col__"]+["__mass_Col__"] )
+out = pd.DataFrame( lund_d_ohw_2, columns=[str(i) for i in range(1600)]+["__signal_col__"]+["__mass_Col__"] )
 
 out.to_hdf( outfile+".h5", "table", format="table", complib="blosc", complevel=5 )
 
