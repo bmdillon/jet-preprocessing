@@ -17,7 +17,7 @@ lund_1 = get_plane( lund_jets, 1)
 lund_2 = get_plane( lund_jets, 2)
 lund_3 = get_plane( lund_jets, 3)
 
-planes = 3
+planes = 2
 
 if planes == 0:
     lund_d = lund_0
@@ -28,7 +28,7 @@ if planes == 2:
 if planes == 3:
     lund_d = [ i+j+k+l for i,j,k,l in zip(lund_0,lund_1,lund_2,lund_3) ]
 
-masses = np.array( [ np.max( [ i[2] for i in jet ] ) for jet in lund_jets ] )
+masses = np.array( [ np.max( [ i[2] for i in jet ] ) if len(jet)>0 else 0.0 for jet in lund_jets ] )
 
 def flatten( lund_jet_sample ):
     jf = []
